@@ -1,7 +1,19 @@
 package main
 
-import "github.com/zakkbob/sha256"
+import (
+	"encoding/hex"
+	"flag"
+	"fmt"
+
+	"github.com/zakkbob/sha256"
+)
+
+func hashToString(b [32]byte) string {
+	return hex.EncodeToString(b[:])
+}
 
 func main() {
-	sha256.Hash([]byte{})
+	flag.Parse()
+	hash := sha256.Hash([]byte(flag.Arg(0)))
+	fmt.Print(hashToString(hash))
 }

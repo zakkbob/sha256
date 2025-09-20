@@ -1,12 +1,22 @@
 package sha256
 
 import (
-	"fmt"
+	"crypto/sha256"
+	"encoding/hex"
 	"testing"
 )
 
-func FuzzSHA256(t *testing.T) {
-	data := [0]byte{}
-	res := Hash(data[:])
-	fmt.Printf("%x%x%x%x%x%x%x%x", res[0], res[1], res[2], res[3], res[4], res[5], res[6], res[7])
+func hashString(b [32]byte) string {
+	return hex.EncodeToString(b[:])
+}
+
+func FuzzHash(f *testing.F) {
+	f.Add([]byte{})
+	f.Fuzz(func(t *testing.T, a []byte) {
+		out := Hash(a)
+		expected := sha256.Sum256(a)
+		if out != expected {
+			t.Errorf("got %s; expected %s", hashString(out), hashString(expected))
+		}
+	})
 }

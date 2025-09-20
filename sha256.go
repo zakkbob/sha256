@@ -1,7 +1,5 @@
 package sha256
 
-import "fmt"
-
 const BlockSize = 512
 const WordSize = 32
 
@@ -65,6 +63,17 @@ func toWords(data []byte) []uint32 {
 	return words
 }
 
+func toBytes(words []uint32) []byte {
+	var b []byte
+	for _, w := range words {
+		b = append(b, byte(w&0b11111111000000000000000000000000>>24))
+		b = append(b, byte(w&0b00000000111111110000000000000000>>16))
+		b = append(b, byte(w&0b00000000000000001111111100000000>>8))
+		b = append(b, byte(w&0b00000000000000000000000011111111))
+	}
+	return b
+}
+
 func bigSigmaZero(n uint32) uint32 {
 	return rotateRight(n, 2) ^ rotateRight(n, 13) ^ rotateRight(n, 22)
 }
@@ -89,14 +98,9 @@ func maj(x, y, z uint32) uint32 {
 	return (x & y) ^ (x & z) ^ (y & z)
 }
 
-func stuff(a, b, c, d, e, f, g, h, t1, t2 uint32) (string, string, string, string, string, string, string, string, string, string) {
-	return fmt.Sprintf("%b", a), fmt.Sprintf("%b", b), fmt.Sprintf("%b", c), fmt.Sprintf("%b", d), fmt.Sprintf("%b", e), fmt.Sprintf("%b", f), fmt.Sprintf("%b", g), fmt.Sprintf("%b", h), fmt.Sprintf("%b", t1), fmt.Sprintf("%b", t2)
-}
-
-func Hash(data []byte) [8]uint32 {
+func Hash(data []byte) [32]byte {
 	var schedule [64]uint32
 	var a, b, c, d, e, f, g, h uint32
-	fmt.Print(stuff(a, b, c, d, e, f, g, h, a, b))
 	hash := [8]uint32{
 		0x6a09e667,
 		0xbb67ae85,
@@ -155,6 +159,6 @@ func Hash(data []byte) [8]uint32 {
 		hash[7] += h
 	}
 
-	return hash
+	return [32]byte(toBytes(hash[:]))
 
 }
