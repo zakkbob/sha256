@@ -1,5 +1,7 @@
 package sha256
 
+import "slices"
+
 const BlockSize = 512
 const WordSize = 32
 
@@ -33,7 +35,10 @@ func process(data []byte) []byte {
 		zeroBytes += 64
 	}
 
+	data = slices.Grow(data, zeroBytes+8+1)
+
 	data = append(data, 0b10000000)
+
 	for range zeroBytes {
 		data = append(data, 0b00000000)
 	}

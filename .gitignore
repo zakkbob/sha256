@@ -1,1 +1,3 @@
-cpu.out
+*.out
+.test
+sha256.test
