@@ -18,11 +18,6 @@ var k = [64]uint32{
 	0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 }
 
-func rotateLeft(b uint32, n int) uint32 {
-	n %= 32
-	return (b << n) | (b >> (32 - n))
-}
-
 func rotateRight(b uint32, n int) uint32 {
 	n %= 32
 	return (b >> n) | (b << (32 - n))
@@ -71,8 +66,9 @@ func toWords(data []byte) []uint32 {
 	return words
 }
 
-func toBytes(words []uint32) []byte {
-	b := make([]byte, len(words)*4)
+func toBytes(h0, h1, h2, h3, h4, h5, h6, h7 uint32) [32]byte {
+	words := [8]uint32{h0, h1, h2, h3, h4, h5, h6, h7}
+	var b [32]byte
 	for i, w := range words {
 		b[4*i] = byte(w & 0b11111111000000000000000000000000 >> 24)
 		b[4*i+1] = byte(w & 0b00000000111111110000000000000000 >> 16)
@@ -106,42 +102,42 @@ func maj(x, y, z uint32) uint32 {
 	return (x & y) ^ (x & z) ^ (y & z)
 }
 
+func consumeUint32(b []byte) uint32 {
+	var n uint32
+	n |= uint32(b[0]) << 24
+	n |= uint32(b[1]) << 16
+	n |= uint32(b[2]) << 8
+	n |= uint32(b[3])
+	return n
+}
+
 func Hash(data []byte) [32]byte {
 	var schedule [64]uint32
 	var a, b, c, d, e, f, g, h uint32
-	hash := [8]uint32{
-		0x6a09e667,
-		0xbb67ae85,
-		0x3c6ef372,
-		0xa54ff53a,
-		0x510e527f,
-		0x9b05688c,
-		0x1f83d9ab,
-		0x5be0cd19,
-	}
+	var h0, h1, h2, h3, h4, h5, h6, h7 uint32 = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
 
 	data = process(data)
-	msg := toWords(data)
 
-	blocks := len(msg) * 32 / 512
+	blocks := len(data) * 8 / 512
 
 	for i := range blocks {
 		for t := range 64 {
 			if t <= 15 {
-				schedule[t] = msg[t+i*16]
+				j := t*4 + i*64
+				schedule[t] = (uint32(data[j]) << 24) | (uint32(data[j+1]) << 16) | (uint32(data[j+2]) << 8) | uint32(data[j+3])
 				continue
 			}
 			schedule[t] = lilSigmaOne(schedule[t-2]) + schedule[t-7] + lilSigmaZero(schedule[t-15]) + schedule[t-16]
 		}
 
-		a = hash[0]
-		b = hash[1]
-		c = hash[2]
-		d = hash[3]
-		e = hash[4]
-		f = hash[5]
-		g = hash[6]
-		h = hash[7]
+		a = h0
+		b = h1
+		c = h2
+		d = h3
+		e = h4
+		f = h5
+		g = h6
+		h = h7
 
 		for t := range 64 {
 			temp1 := h + bigSigmaOne(e) + ch(e, f, g) + k[t] + schedule[t]
@@ -157,16 +153,16 @@ func Hash(data []byte) [32]byte {
 
 		}
 
-		hash[0] += a
-		hash[1] += b
-		hash[2] += c
-		hash[3] += d
-		hash[4] += e
-		hash[5] += f
-		hash[6] += g
-		hash[7] += h
+		h0 += a
+		h1 += b
+		h2 += c
+		h3 += d
+		h4 += e
+		h5 += f
+		h6 += g
+		h7 += h
 	}
 
-	return [32]byte(toBytes(hash[:]))
+	return toBytes(h0, h1, h2, h3, h4, h5, h6, h7)
 
 }
