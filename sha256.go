@@ -117,13 +117,13 @@ func Hash(data []byte) [32]byte {
 
 	blocks := len(msg) * 32 / 512
 
-	for range blocks {
-		for i := range 64 {
-			if i <= 15 {
-				schedule[i] = msg[i]
+	for i := range blocks {
+		for t := range 64 {
+			if t <= 15 {
+				schedule[t] = msg[t+i*32]
 				continue
 			}
-			schedule[i] = lilSigmaOne(schedule[i-2]) + schedule[i-7] + lilSigmaZero(schedule[i-15]) + schedule[i-16]
+			schedule[t] = lilSigmaOne(schedule[t-2]) + schedule[t-7] + lilSigmaZero(schedule[t-15]) + schedule[t-16]
 		}
 
 		a = hash[0]
