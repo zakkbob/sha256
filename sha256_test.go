@@ -21,7 +21,13 @@ func FuzzHash(f *testing.F) {
 	})
 }
 
-func BenchmarkHashEmpty(b *testing.B) {
+func BenchmarkStdEmptyHash(b *testing.B) {
+	for b.Loop() {
+		sha256.Sum256([]byte{})
+	}
+}
+
+func BenchmarkEmptyHash(b *testing.B) {
 	for b.Loop() {
 		Hash([]byte{})
 	}

@@ -1,6 +1,8 @@
 package sha256
 
-import "slices"
+import (
+	"slices"
+)
 
 const BlockSize = 512
 const WordSize = 32
