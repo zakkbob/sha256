@@ -120,7 +120,7 @@ func Hash(data []byte) [32]byte {
 	for i := range blocks {
 		for t := range 64 {
 			if t <= 15 {
-				schedule[t] = msg[t+i*32]
+				schedule[t] = msg[t+i*16]
 				continue
 			}
 			schedule[t] = lilSigmaOne(schedule[t-2]) + schedule[t-7] + lilSigmaZero(schedule[t-15]) + schedule[t-16]
