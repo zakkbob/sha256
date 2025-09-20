@@ -20,3 +20,30 @@ func FuzzHash(f *testing.F) {
 		}
 	})
 }
+
+func BenchmarkHashEmpty(b *testing.B) {
+	for b.Loop() {
+		Hash([]byte{})
+	}
+}
+
+func BenchmarkHashOneBlock(b *testing.B) {
+	for b.Loop() {
+		b := [55]byte{}
+		Hash(b[:])
+	}
+}
+
+func BenchmarkHashTenBlocks(b *testing.B) {
+	for b.Loop() {
+		b := [631]byte{}
+		Hash(b[:])
+	}
+}
+
+func BenchmarkHashHundredBlocks(b *testing.B) {
+	for b.Loop() {
+		b := [6391]byte{}
+		Hash(b[:])
+	}
+}
