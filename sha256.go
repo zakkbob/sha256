@@ -51,25 +51,26 @@ func process(data []byte) []byte {
 }
 
 func toWords(data []byte) []uint32 {
-	var words []uint32
+	var word uint32
+	words := make([]uint32, len(data)/4)
 	for i := 0; i < len(data); i += 4 {
-		var word uint32
+		word = 0
 		word |= uint32(data[i]) << 24
 		word |= uint32(data[i+1]) << 16
 		word |= uint32(data[i+2]) << 8
 		word |= uint32(data[i+3])
-		words = append(words, word)
+		words[i/4] = word
 	}
 	return words
 }
 
 func toBytes(words []uint32) []byte {
-	var b []byte
-	for _, w := range words {
-		b = append(b, byte(w&0b11111111000000000000000000000000>>24))
-		b = append(b, byte(w&0b00000000111111110000000000000000>>16))
-		b = append(b, byte(w&0b00000000000000001111111100000000>>8))
-		b = append(b, byte(w&0b00000000000000000000000011111111))
+	b := make([]byte, len(words)*4)
+	for i, w := range words {
+		b[4*i] = byte(w & 0b11111111000000000000000000000000 >> 24)
+		b[4*i+1] = byte(w & 0b00000000111111110000000000000000 >> 16)
+		b[4*i+2] = byte(w & 0b00000000000000001111111100000000 >> 8)
+		b[4*i+3] = byte(w & 0b00000000000000000000000011111111)
 	}
 	return b
 }
