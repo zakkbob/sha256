@@ -52,28 +52,14 @@ func process(data []byte) []byte {
 	return data
 }
 
-func toWords(data []byte) []uint32 {
-	var word uint32
-	words := make([]uint32, len(data)/4)
-	for i := 0; i < len(data); i += 4 {
-		word = 0
-		word |= uint32(data[i]) << 24
-		word |= uint32(data[i+1]) << 16
-		word |= uint32(data[i+2]) << 8
-		word |= uint32(data[i+3])
-		words[i/4] = word
-	}
-	return words
-}
-
 func toBytes(h0, h1, h2, h3, h4, h5, h6, h7 uint32) [32]byte {
 	words := [8]uint32{h0, h1, h2, h3, h4, h5, h6, h7}
 	var b [32]byte
 	for i, w := range words {
-		b[4*i] = byte(w & 0b11111111000000000000000000000000 >> 24)
-		b[4*i+1] = byte(w & 0b00000000111111110000000000000000 >> 16)
-		b[4*i+2] = byte(w & 0b00000000000000001111111100000000 >> 8)
-		b[4*i+3] = byte(w & 0b00000000000000000000000011111111)
+		b[4*i] = byte(w >> 24)
+		b[4*i+1] = byte(w >> 16)
+		b[4*i+2] = byte(w >> 8)
+		b[4*i+3] = byte(w)
 	}
 	return b
 }
@@ -100,15 +86,6 @@ func ch(x, y, z uint32) uint32 {
 
 func maj(x, y, z uint32) uint32 {
 	return (x & y) ^ (x & z) ^ (y & z)
-}
-
-func consumeUint32(b []byte) uint32 {
-	var n uint32
-	n |= uint32(b[0]) << 24
-	n |= uint32(b[1]) << 16
-	n |= uint32(b[2]) << 8
-	n |= uint32(b[3])
-	return n
 }
 
 func Hash(data []byte) [32]byte {
