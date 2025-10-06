@@ -4,8 +4,8 @@
 > This is my own implementation, so I wouldn't use it if I were you. (It's also 10x slower than the standard implementation)
 
 ## Benchmark
-goos: linux
-goarch: amd64
+goos: linux<br>
+goarch: amd64<br>
 cpu: AMD Ryzen 3 3200U with Radeon Vega Mobile Gfx
 | Benchmark      | ns/op | B/op      | allocs/op |
 | -------------- | ----- | --------- | --------- |
