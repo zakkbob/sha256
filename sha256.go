@@ -23,7 +23,6 @@ func rotateRight(b uint32, n int) uint32 {
 
 func toBytes(h [8]uint32) [32]byte {
 	var b [32]byte
-
 	binary.BigEndian.PutUint32(b[0:4], h[0])
 	binary.BigEndian.PutUint32(b[4:8], h[1])
 	binary.BigEndian.PutUint32(b[8:12], h[2])
@@ -32,7 +31,6 @@ func toBytes(h [8]uint32) [32]byte {
 	binary.BigEndian.PutUint32(b[20:24], h[5])
 	binary.BigEndian.PutUint32(b[24:28], h[6])
 	binary.BigEndian.PutUint32(b[28:32], h[7])
-
 	return b
 }
 
@@ -67,8 +65,7 @@ func New() Digest {
 }
 
 type Digest struct {
-	h [8]uint32
-
+	h     [8]uint32
 	count int // number of bytes written
 	block [64]byte
 	i     int // index of next byte to write to block
@@ -120,7 +117,6 @@ func (d *Digest) Sum(b []byte) []byte {
 	c.block[61] = byte(bits & 0b0000000000000000000000000000000000000000111111110000000000000000 >> 16)
 	c.block[62] = byte(bits & 0b0000000000000000000000000000000000000000000000001111111100000000 >> 8)
 	c.block[63] = byte(bits & 0b0000000000000000000000000000000000000000000000000000000011111111)
-
 	c.processBlock()
 
 	h := toBytes(c.h)
