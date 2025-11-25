@@ -88,21 +88,80 @@ func maj(x, y, z uint32) uint32 {
 	return (x & y) ^ (x & z) ^ (y & z)
 }
 
+func New() Digest {
+	d := Digest{}
+	d.Reset()
+	return d
+}
+
 type Digest struct {
-	b []byte
+	a, b, c, d, e, f, g, h         uint32
+	h0, h1, h2, h3, h4, h5, h6, h7 uint32
+
+	count int // number of bytes written
+	block [64]byte
+	i     int // index of next byte to write to block
 }
 
 func (d *Digest) Write(p []byte) (n int, err error) {
-	d.b = append(d.b, p...)
+	for _, b := range p {
+		d.block[d.i] = b
+		d.i++
+		d.count++
+
+		if d.i == 64 {
+			d.i = 0
+			d.processBlock()
+		}
+	}
+
 	return len(p), nil
 }
 
 func (d *Digest) Sum(b []byte) []byte {
-	h := Hash(d.b)
-	return h[:]
+	var c Digest
+	c = *d
+
+	c.block[c.i] = 0b10000000
+	c.i++
+	if c.i == 64 {
+		c.i = 0
+		c.processBlock()
+	}
+
+	for i := range 64 - c.i {
+		c.block[c.i+i] = 0
+	}
+
+	if c.i > 56 {
+		c.processBlock()
+		for i := range c.i {
+			c.block[i] = 0
+		}
+	}
+
+	bits := uint64(d.count) * 8
+	c.block[56] = byte(bits & 0b1111111100000000000000000000000000000000000000000000000000000000 >> 56)
+	c.block[57] = byte(bits & 0b0000000011111111000000000000000000000000000000000000000000000000 >> 48)
+	c.block[58] = byte(bits & 0b0000000000000000111111110000000000000000000000000000000000000000 >> 40)
+	c.block[59] = byte(bits & 0b0000000000000000000000001111111100000000000000000000000000000000 >> 32)
+	c.block[60] = byte(bits & 0b0000000000000000000000000000000011111111000000000000000000000000 >> 24)
+	c.block[61] = byte(bits & 0b0000000000000000000000000000000000000000111111110000000000000000 >> 16)
+	c.block[62] = byte(bits & 0b0000000000000000000000000000000000000000000000001111111100000000 >> 8)
+	c.block[63] = byte(bits & 0b0000000000000000000000000000000000000000000000000000000011111111)
+
+	c.processBlock()
+
+	h := toBytes(c.h0, c.h1, c.h2, c.h3, c.h4, c.h5, c.h6, c.h7)
+	b = append(b, h[:]...)
+	return b
 }
 
 func (d *Digest) Reset() {
+	d.a, d.b, d.c, d.d, d.e, d.f, d.g, d.h = 0, 0, 0, 0, 0, 0, 0, 0
+	d.h0, d.h1, d.h2, d.h3, d.h4, d.h5, d.h6, d.h7 = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+	d.count = 0
+	d.i = 0
 }
 
 func (d *Digest) Size() int {
@@ -113,57 +172,53 @@ func (d *Digest) BlockSize() int {
 	return 512
 }
 
-func Hash(data []byte) [32]byte {
+func (d *Digest) processBlock() {
 	var schedule [64]uint32
-	var a, b, c, d, e, f, g, h uint32
-	var h0, h1, h2, h3, h4, h5, h6, h7 uint32 = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
 
-	data = process(data)
-
-	blocks := len(data) * 8 / 512
-
-	for i := range blocks {
-		for t := range 64 {
-			if t <= 15 {
-				j := t*4 + i*64
-				schedule[t] = (uint32(data[j]) << 24) | (uint32(data[j+1]) << 16) | (uint32(data[j+2]) << 8) | uint32(data[j+3])
-				continue
-			}
-			schedule[t] = lilSigmaOne(schedule[t-2]) + schedule[t-7] + lilSigmaZero(schedule[t-15]) + schedule[t-16]
+	for t := range 64 {
+		if t <= 15 {
+			j := t * 4
+			schedule[t] = (uint32(d.block[j]) << 24) | (uint32(d.block[j+1]) << 16) | (uint32(d.block[j+2]) << 8) | uint32(d.block[j+3])
+			continue
 		}
-
-		a = h0
-		b = h1
-		c = h2
-		d = h3
-		e = h4
-		f = h5
-		g = h6
-		h = h7
-
-		for t := range 64 {
-			temp1 := h + bigSigmaOne(e) + ch(e, f, g) + k[t] + schedule[t]
-			temp2 := bigSigmaZero(a) + maj(a, b, c)
-			h = g
-			g = f
-			f = e
-			e = d + temp1
-			d = c
-			c = b
-			b = a
-			a = temp1 + temp2
-
-		}
-
-		h0 += a
-		h1 += b
-		h2 += c
-		h3 += d
-		h4 += e
-		h5 += f
-		h6 += g
-		h7 += h
+		schedule[t] = lilSigmaOne(schedule[t-2]) + schedule[t-7] + lilSigmaZero(schedule[t-15]) + schedule[t-16]
 	}
 
-	return toBytes(h0, h1, h2, h3, h4, h5, h6, h7)
+	d.a = d.h0
+	d.b = d.h1
+	d.c = d.h2
+	d.d = d.h3
+	d.e = d.h4
+	d.f = d.h5
+	d.g = d.h6
+	d.h = d.h7
+
+	for t := range 64 {
+		temp1 := d.h + bigSigmaOne(d.e) + ch(d.e, d.f, d.g) + k[t] + schedule[t]
+		temp2 := bigSigmaZero(d.a) + maj(d.a, d.b, d.c)
+		d.h = d.g
+		d.g = d.f
+		d.f = d.e
+		d.e = d.d + temp1
+		d.d = d.c
+		d.c = d.b
+		d.b = d.a
+		d.a = temp1 + temp2
+
+	}
+
+	d.h0 += d.a
+	d.h1 += d.b
+	d.h2 += d.c
+	d.h3 += d.d
+	d.h4 += d.e
+	d.h5 += d.f
+	d.h6 += d.g
+	d.h7 += d.h
+}
+
+func Sum(data []byte) [32]byte {
+	d := New()
+	d.Write(data)
+	return [32]byte(d.Sum([]byte{}))
 }
