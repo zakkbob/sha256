@@ -15,7 +15,7 @@ func TestHash(t *testing.T) {
 
 	expected := sha256.Sum256(b)
 	t.Run("Hash fn", func(t *testing.T) {
-		out := Hash(b)
+		out := Sum(b)
 		if out != expected {
 			t.Errorf("got %s; expected %s", hashString(out), hashString(expected))
 		}
@@ -35,7 +35,7 @@ func FuzzHash(f *testing.F) {
 	f.Fuzz(func(t *testing.T, a []byte) {
 		expected := sha256.Sum256(a)
 		t.Run("Hash fn", func(t *testing.T) {
-			out := Hash(a)
+			out := Sum(a)
 			if out != expected {
 				t.Errorf("got %s; expected %s", hashString(out), hashString(expected))
 			}
@@ -59,27 +59,27 @@ func BenchmarkStdEmptyHash(b *testing.B) {
 
 func BenchmarkEmptyHash(b *testing.B) {
 	for b.Loop() {
-		Hash([]byte{})
+		Sum([]byte{})
 	}
 }
 
 func BenchmarkHashOneBlock(b *testing.B) {
 	for b.Loop() {
 		b := [55]byte{}
-		Hash(b[:])
+		Sum(b[:])
 	}
 }
 
 func BenchmarkHashTenBlocks(b *testing.B) {
 	for b.Loop() {
 		b := [631]byte{}
-		Hash(b[:])
+		Sum(b[:])
 	}
 }
 
 func BenchmarkHashHundredBlocks(b *testing.B) {
 	for b.Loop() {
 		b := [6391]byte{}
-		Hash(b[:])
+		Sum(b[:])
 	}
 }

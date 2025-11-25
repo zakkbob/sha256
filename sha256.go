@@ -52,8 +52,8 @@ func process(data []byte) []byte {
 	return data
 }
 
-func toBytes(h0, h1, h2, h3, h4, h5, h6, h7 uint32) [32]byte {
-	words := [8]uint32{h0, h1, h2, h3, h4, h5, h6, h7}
+func toBytes(h [8]uint32) [32]byte {
+	words := [8]uint32{h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7]}
 	var b [32]byte
 	for i, w := range words {
 		b[4*i] = byte(w >> 24)
@@ -95,7 +95,7 @@ func New() Digest {
 }
 
 type Digest struct {
-	h0, h1, h2, h3, h4, h5, h6, h7 uint32
+	h [8]uint32
 
 	count int // number of bytes written
 	block [64]byte
@@ -151,13 +151,13 @@ func (d *Digest) Sum(b []byte) []byte {
 
 	c.processBlock()
 
-	h := toBytes(c.h0, c.h1, c.h2, c.h3, c.h4, c.h5, c.h6, c.h7)
+	h := toBytes(c.h)
 	b = append(b, h[:]...)
 	return b
 }
 
 func (d *Digest) Reset() {
-	d.h0, d.h1, d.h2, d.h3, d.h4, d.h5, d.h6, d.h7 = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+	d.h = [8]uint32{0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19}
 	d.count = 0
 	d.i = 0
 }
@@ -182,14 +182,14 @@ func (d *Digest) processBlock() {
 		schedule[t] = lilSigmaOne(schedule[t-2]) + schedule[t-7] + lilSigmaZero(schedule[t-15]) + schedule[t-16]
 	}
 
-	a := d.h0
-	b := d.h1
-	c := d.h2
-	d1 := d.h3
-	e := d.h4
-	f := d.h5
-	g := d.h6
-	h := d.h7
+	a := d.h[0]
+	b := d.h[1]
+	c := d.h[2]
+	d1 := d.h[3]
+	e := d.h[4]
+	f := d.h[5]
+	g := d.h[6]
+	h := d.h[7]
 
 	for t := range 64 {
 		temp1 := h + bigSigmaOne(e) + ch(e, f, g) + k[t] + schedule[t]
@@ -205,14 +205,14 @@ func (d *Digest) processBlock() {
 
 	}
 
-	d.h0 += a
-	d.h1 += b
-	d.h2 += c
-	d.h3 += d1
-	d.h4 += e
-	d.h5 += f
-	d.h6 += g
-	d.h7 += h
+	d.h[0] += a
+	d.h[1] += b
+	d.h[2] += c
+	d.h[3] += d1
+	d.h[4] += e
+	d.h[5] += f
+	d.h[6] += g
+	d.h[7] += h
 }
 
 func Sum(data []byte) [32]byte {

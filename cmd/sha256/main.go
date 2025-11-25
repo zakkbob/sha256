@@ -14,6 +14,6 @@ func hashToString(b [32]byte) string {
 
 func main() {
 	flag.Parse()
-	hash := sha256.Hash([]byte(flag.Arg(0)))
+	hash := sha256.Sum([]byte(flag.Arg(0)))
 	fmt.Print(hashToString(hash))
 }
