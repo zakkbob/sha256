@@ -95,7 +95,6 @@ func New() Digest {
 }
 
 type Digest struct {
-	a, b, c, d, e, f, g, h         uint32
 	h0, h1, h2, h3, h4, h5, h6, h7 uint32
 
 	count int // number of bytes written
@@ -158,7 +157,6 @@ func (d *Digest) Sum(b []byte) []byte {
 }
 
 func (d *Digest) Reset() {
-	d.a, d.b, d.c, d.d, d.e, d.f, d.g, d.h = 0, 0, 0, 0, 0, 0, 0, 0
 	d.h0, d.h1, d.h2, d.h3, d.h4, d.h5, d.h6, d.h7 = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
 	d.count = 0
 	d.i = 0
@@ -184,37 +182,37 @@ func (d *Digest) processBlock() {
 		schedule[t] = lilSigmaOne(schedule[t-2]) + schedule[t-7] + lilSigmaZero(schedule[t-15]) + schedule[t-16]
 	}
 
-	d.a = d.h0
-	d.b = d.h1
-	d.c = d.h2
-	d.d = d.h3
-	d.e = d.h4
-	d.f = d.h5
-	d.g = d.h6
-	d.h = d.h7
+	a := d.h0
+	b := d.h1
+	c := d.h2
+	d1 := d.h3
+	e := d.h4
+	f := d.h5
+	g := d.h6
+	h := d.h7
 
 	for t := range 64 {
-		temp1 := d.h + bigSigmaOne(d.e) + ch(d.e, d.f, d.g) + k[t] + schedule[t]
-		temp2 := bigSigmaZero(d.a) + maj(d.a, d.b, d.c)
-		d.h = d.g
-		d.g = d.f
-		d.f = d.e
-		d.e = d.d + temp1
-		d.d = d.c
-		d.c = d.b
-		d.b = d.a
-		d.a = temp1 + temp2
+		temp1 := h + bigSigmaOne(e) + ch(e, f, g) + k[t] + schedule[t]
+		temp2 := bigSigmaZero(a) + maj(a, b, c)
+		h = g
+		g = f
+		f = e
+		e = d1 + temp1
+		d1 = c
+		c = b
+		b = a
+		a = temp1 + temp2
 
 	}
 
-	d.h0 += d.a
-	d.h1 += d.b
-	d.h2 += d.c
-	d.h3 += d.d
-	d.h4 += d.e
-	d.h5 += d.f
-	d.h6 += d.g
-	d.h7 += d.h
+	d.h0 += a
+	d.h1 += b
+	d.h2 += c
+	d.h3 += d1
+	d.h4 += e
+	d.h5 += f
+	d.h6 += g
+	d.h7 += h
 }
 
 func Sum(data []byte) [32]byte {
