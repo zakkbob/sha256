@@ -1,5 +1,7 @@
 package sha256
 
+import "encoding/binary"
+
 const BlockSize = 512
 const WordSize = 32
 
@@ -20,14 +22,17 @@ func rotateRight(b uint32, n int) uint32 {
 }
 
 func toBytes(h [8]uint32) [32]byte {
-	words := [8]uint32{h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7]}
 	var b [32]byte
-	for i, w := range words {
-		b[4*i] = byte(w >> 24)
-		b[4*i+1] = byte(w >> 16)
-		b[4*i+2] = byte(w >> 8)
-		b[4*i+3] = byte(w)
-	}
+
+	binary.BigEndian.PutUint32(b[0:4], h[0])
+	binary.BigEndian.PutUint32(b[4:8], h[1])
+	binary.BigEndian.PutUint32(b[8:12], h[2])
+	binary.BigEndian.PutUint32(b[12:16], h[3])
+	binary.BigEndian.PutUint32(b[16:20], h[4])
+	binary.BigEndian.PutUint32(b[20:24], h[5])
+	binary.BigEndian.PutUint32(b[24:28], h[6])
+	binary.BigEndian.PutUint32(b[28:32], h[7])
+
 	return b
 }
 
@@ -137,6 +142,12 @@ func (d *Digest) BlockSize() int {
 	return 512
 }
 
+func Sum(data []byte) [32]byte {
+	d := New()
+	d.Write(data)
+	return [32]byte(d.Sum([]byte{}))
+}
+
 func (d *Digest) processBlock() {
 	var schedule [64]uint32
 
@@ -180,10 +191,4 @@ func (d *Digest) processBlock() {
 	d.h[5] += f
 	d.h[6] += g
 	d.h[7] += h
-}
-
-func Sum(data []byte) [32]byte {
-	d := New()
-	d.Write(data)
-	return [32]byte(d.Sum([]byte{}))
 }
