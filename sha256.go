@@ -88,6 +88,31 @@ func maj(x, y, z uint32) uint32 {
 	return (x & y) ^ (x & z) ^ (y & z)
 }
 
+type Digest struct {
+	b []byte
+}
+
+func (d *Digest) Write(p []byte) (n int, err error) {
+	d.b = append(d.b, p...)
+	return len(p), nil
+}
+
+func (d *Digest) Sum(b []byte) []byte {
+	h := Hash(d.b)
+	return h[:]
+}
+
+func (d *Digest) Reset() {
+}
+
+func (d *Digest) Size() int {
+	return 256
+}
+
+func (d *Digest) BlockSize() int {
+	return 512
+}
+
 func Hash(data []byte) [32]byte {
 	var schedule [64]uint32
 	var a, b, c, d, e, f, g, h uint32
@@ -141,5 +166,4 @@ func Hash(data []byte) [32]byte {
 	}
 
 	return toBytes(h0, h1, h2, h3, h4, h5, h6, h7)
-
 }
