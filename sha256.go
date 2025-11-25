@@ -1,9 +1,5 @@
 package sha256
 
-import (
-	"slices"
-)
-
 const BlockSize = 512
 const WordSize = 32
 
@@ -21,35 +17,6 @@ var k = [64]uint32{
 func rotateRight(b uint32, n int) uint32 {
 	n %= 32
 	return (b >> n) | (b << (32 - n))
-}
-
-func process(data []byte) []byte {
-	bits := uint64(len(data)) * 8
-	freeBytes := 64 - len(data)%64
-
-	zeroBytes := freeBytes - 1 - 8
-	if freeBytes < 9 {
-		zeroBytes += 64
-	}
-
-	data = slices.Grow(data, zeroBytes+8+1)
-
-	data = append(data, 0b10000000)
-
-	for range zeroBytes {
-		data = append(data, 0b00000000)
-	}
-
-	data = append(data, byte(bits&0b1111111100000000000000000000000000000000000000000000000000000000>>56))
-	data = append(data, byte(bits&0b0000000011111111000000000000000000000000000000000000000000000000>>48))
-	data = append(data, byte(bits&0b0000000000000000111111110000000000000000000000000000000000000000>>40))
-	data = append(data, byte(bits&0b0000000000000000000000001111111100000000000000000000000000000000>>32))
-	data = append(data, byte(bits&0b0000000000000000000000000000000011111111000000000000000000000000>>24))
-	data = append(data, byte(bits&0b0000000000000000000000000000000000000000111111110000000000000000>>16))
-	data = append(data, byte(bits&0b0000000000000000000000000000000000000000000000001111111100000000>>8))
-	data = append(data, byte(bits&0b0000000000000000000000000000000000000000000000000000000011111111))
-
-	return data
 }
 
 func toBytes(h [8]uint32) [32]byte {
